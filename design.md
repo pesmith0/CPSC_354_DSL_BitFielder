@@ -1,5 +1,41 @@
+This file contains a preliminary concept of the planned syntax for the BitFielder DSL.
+
+Context-free grammar syntax (unfinished):
 ```
-# This file contains a preliminary concept of the planned syntax for the BitFielder DSL.
+# int type is a fixed width integer type
+
+<1st stmt>	-> <int type> <name>
+<int type>	-> uint_fast32_t, uint_least32_t, uint_least64_t, etc.
+<name>		-> same strings that are allowed for variable names in C
+
+# make this optional
+<2nd stmt>	-> prefix <name>
+
+# prop. = property
+<stmt>		-> <prop. stmt>
+<prop. stmt>	-> property <name> <bits>
+<bits>		-> any positive integer
+
+<stmt>		-> <super prop.>
+<super prop.>	-> property <name>, prefix <name> \n [indent] <prop. list>
+<prop. list>	-> <prop. stmt> \n <prop. list>
+<prop. list>	-> <prop. stmt> \n [dedent]
+
+<stmt>		-> values <name>: \n [indent] <values list>
+<values list>	-> <name> \n <values list>
+<values list>	-> <name> \n [dedent]
+
+# con. exp. = constant expression
+# exp. list = constant expression list
+<con. exp.>	-> <name>
+<con. exp.>	-> <name>(<integer>)
+<stmt>		-> constant <name> { <exp. list> }
+<exp. list>	-> <con. exp.>, <exp. list>
+<exp. list>	-> <con. exp.>
+
+```
+Example input file:
+```
 # Hashtags indicate a comment, which will be ignored.
 // Double slashes indicate text that will be included in the output as a C++ comment. They have to be on their own line.
 
