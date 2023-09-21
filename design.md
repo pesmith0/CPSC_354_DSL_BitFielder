@@ -49,7 +49,7 @@ values MATERIAL:
     MAT_WOOD
     MAT_METAL
 
-constant B_GRASS { MAT_GRASS | _B_SOLID } # In this case MAT_GRASS is a stand-in for "MATERIAL(1)", and _B_SOLID is a stand-in for "IS_WALL, HEIGHT(12)".
+constant B_GRASS { MAT_GRASS, _B_SOLID } # In this case MAT_GRASS is a stand-in for "MATERIAL(1)", and _B_SOLID is a stand-in for "IS_WALL, HEIGHT(12)".
 
 # === Possible Future Features ===
 # Property modifier macros
