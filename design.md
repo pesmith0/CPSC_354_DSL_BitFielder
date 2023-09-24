@@ -2,37 +2,37 @@ This file contains a preliminary concept of the planned syntax for the BitFielde
 
 Context-free grammar syntax (unfinished):
 ```
-<program>	    -> <1st stmt>
+<program>       -> <1st stmt>
                  | <1st stmt> \n <2nd stmt>
                  | <1st stmt> \n <2nd stmt> \n <any>
                  | <1st stmt> \n <any>
 
-<any>	        ->	<prop. stmt> | <super prop.> | values <name>: \n [indent] <values list> | constant <name> { <exp. list> }
+<any>           -> <prop. stmt> | <super prop.> | values <name>: \n [indent] <values list> | constant <name> { <exp. list> }
 
 # int type is a fixed width integer type
 # will support much more fixed width integer types from C, not just three
-<1st stmt>	    -> <int type> <name>
-<int type>	    -> uint_fast32_t | uint_least32_t | uint_least64_t
-<name>		    -> same strings that are allowed for variable names in C
+<1st stmt>      -> <int type> <name>
+<int type>      -> uint_fast32_t | uint_least32_t | uint_least64_t
+<name>          -> same strings that are allowed for variable names in C
 
-<2nd stmt>	    -> prefix <name>
+<2nd stmt>      -> prefix <name>
 
 # prop. = property
 <prop. stmt>    -> property <name> <bits>
-<bits>		    -> any positive integer
+<bits>          -> any positive integer
 
-<super prop.>	-> property <name>, prefix <name> \n [indent] <prop. list>
-<prop. list>	-> <prop. stmt> \n <prop. list>
+<super prop.>   -> property <name>, prefix <name> \n [indent] <prop. list>
+<prop. list>    -> <prop. stmt> \n <prop. list>
                  | <prop. stmt> \n [dedent]
 
-<values list>	-> <name> \n <values list>
+<values list>   -> <name> \n <values list>
                  | <name> \n [dedent]
 
 # con. exp. = constant expression
 # exp. list = constant expression list
-<con. exp.>	    -> <name>
+<con. exp.>     -> <name>
                  | <name>(<integer>)
-<exp. list>	    -> <con. exp.>, <exp. list>
+<exp. list>     -> <con. exp.>, <exp. list>
                  | <con. exp.>
 
 ```
