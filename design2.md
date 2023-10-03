@@ -1,4 +1,5 @@
 NOTE: Currently out of date and soon to be deprecated, a newer version is integrated into the WIP bitfielder_parser.py.
+
 This is a python program that demonstrates how [Lark](https://github.com/lark-parser/lark) can be used to parse BitFielder.
 Not all of the BitFielder syntax is added yet.
 
