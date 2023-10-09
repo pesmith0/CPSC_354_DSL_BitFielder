@@ -1,5 +1,7 @@
 uint_fast32_t BlockID
+
 prefix BLOCK_
+
 property HEALTH 3
 property SHAPE, prefix SHAPE_
     property HEIGHT 4
@@ -14,3 +16,5 @@ values MATERIAL:
     MAT_METAL
 
 constant B_GRASS { MAT_GRASS, _B_SOLID }
+
+# test
