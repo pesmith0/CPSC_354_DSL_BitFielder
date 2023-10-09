@@ -1,4 +1,4 @@
-from tokenize import tokenize, INDENT, DEDENT, NEWLINE, ENCODING
+from tokenize import tokenize, INDENT, DEDENT, NEWLINE, ENCODING, COMMENT
 from io import BytesIO
 from lark import Lark
 
@@ -17,10 +17,14 @@ def tokenize_bitfielder(s):
             result.append(";\n")
         elif token_type == ENCODING:
             pass
+        elif token_type == COMMENT:
+            pass
         else:
             result.append(token_value)
         
     return " ".join(result)
+
+# comments are allowed at the start mysteriously
 
 lark_parser = Lark(r"""
     program : fixed_int_stmt [prefix_stmt] stmt*
@@ -37,7 +41,7 @@ lark_parser = Lark(r"""
                    
     prefix_stmt : "prefix" IDENTIFIER NL
     
-    stmt : property_stmt | super_property | values_stmt | constant_stmt
+    stmt : property_stmt | super_property | values_stmt | constant_stmt | NL
     
     property_stmt : "property" name bits NL
     bits : INTEGER
