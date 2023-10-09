@@ -27,6 +27,8 @@ lark_parser = Lark(r"""
                    
     IDENTIFIER : /[A-Za-z_][A-Za-z_0-9]*/
                    
+    INTEGER : /[0-9]+/
+                   
     fixed_int_stmt : IDENTIFIER name NL
     
     name : IDENTIFIER
@@ -38,7 +40,7 @@ lark_parser = Lark(r"""
     stmt : property_stmt | super_property | values_stmt | constant_stmt
     
     property_stmt : "property" name bits NL
-    bits : SIGNED_NUMBER
+    bits : INTEGER
                    
     super_property : "property" name", prefix" name NL "{{{" property_list
     property_list : property_stmt property_list | property_stmt "}}}"
@@ -51,9 +53,8 @@ lark_parser = Lark(r"""
                    
     expr_list : constant_expr "," expr_list | constant_expr
                    
-    constant_expr : name | name "(" SIGNED_NUMBER ")"
+    constant_expr : name | name "(" INTEGER ")"
                    
-    %import common.SIGNED_NUMBER
     %import common.WS
     %ignore WS
 
