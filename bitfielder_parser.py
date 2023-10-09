@@ -43,10 +43,10 @@ lark_parser = Lark(r"""
     
     stmt : property_stmt | super_property | values_stmt | constant_stmt | NL
     
-    property_stmt : "property" name bits NL
+    property_stmt : "property" name [bits] NL
     bits : INTEGER
                    
-    super_property : "property" name", prefix" name NL "{{{" property_list
+    super_property : "property" name [bits] "," "prefix" name NL "{{{" property_list
     property_list : property_stmt property_list | property_stmt "}}}"
     
     values_stmt : "values" name ":" NL "{{{" values_list
