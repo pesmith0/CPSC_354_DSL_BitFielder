@@ -2,8 +2,8 @@ uint_fast32_t BlockID
 
 prefix BLOCK_
 
-property HEALTH 3
-property SHAPE, prefix SHAPE_
+property HEALTH
+property SHAPE 9, prefix SHAPE_
     property HEIGHT 4
     property IS_AIR 1
 
