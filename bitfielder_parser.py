@@ -35,13 +35,17 @@ lark_parser = Lark(r"""
                    
     prefix_stmt : "prefix" IDENTIFIER NL
     
-    stmt : property_stmt | super_property
+    stmt : property_stmt | super_property | values_stmt
     
     property_stmt : "property" name bits NL
     bits : SIGNED_NUMBER
                    
     super_property : "property" name", prefix" name NL "{{{" property_list
     property_list : property_stmt property_list | property_stmt "}}}"
+    
+    values_stmt : "values" name ":" NL "{{{" values_list
+                   
+    values_list : name NL values_list | name NL "}}}"
                    
     %import common.SIGNED_NUMBER
     %import common.WS
