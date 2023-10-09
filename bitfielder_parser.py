@@ -20,31 +20,32 @@ def tokenize_bitfielder(s):
         else:
             result.append(token_value)
         
-    return "".join(result)
+    return " ".join(result)
 
 lark_parser = Lark(r"""
     program : fixed_int_stmt [prefix_stmt] stmt*
                    
     IDENTIFIER : /[A-Za-z_][A-Za-z_0-9]*/
                    
-    fixed_int_stmt : IDENTIFIER name
+    fixed_int_stmt : IDENTIFIER name NL
     
     name : IDENTIFIER
                    
-    prefix_stmt : "prefix" IDENTIFIER
+    NL : ";"
+                   
+    prefix_stmt : "prefix" IDENTIFIER NL
     
     stmt : property_stmt | super_property
     
-    property_stmt : "property" name bits
+    property_stmt : "property" name bits NL
     bits : SIGNED_NUMBER
                    
-    super_property : "property" name", prefix" name "{{{" property_list
+    super_property : "property" name", prefix" name NL "{{{" property_list
     property_list : property_stmt property_list | property_stmt "}}}"
                    
     %import common.SIGNED_NUMBER
     %import common.WS
     %ignore WS
-    %ignore ";"
 
     """, start='program')
 
