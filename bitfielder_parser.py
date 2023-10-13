@@ -2,6 +2,25 @@ from tokenize import tokenize, INDENT, DEDENT, NEWLINE, ENCODING, COMMENT
 from io import BytesIO
 from lark import Lark
 
+def extract_c_comments(s, comment_list):
+    """
+    Takes a string. Replaces any lines starting with "//" with "comment n" where n is an incrementing number.
+    Saves each comment in the comment list.
+    """
+
+    lines = s.split("\n")
+    # lines = [process_line(line, comment_list) for line in lines]
+    lines = map(lambda line: process_line(line, comment_list), lines)
+
+    return "\n".join(lines)
+
+def process_line(line, comment_list):
+    if line.strip().startswith("//"):
+        comment_list += [line]
+        return "c_comment %d" % (len(comment_list) - 1)
+    else:
+        return line
+
 def tokenize_bitfielder(s):
     """
     Takes a string. Replaces certain tokens with ones that Lark can parse. Returns the modified string.
@@ -27,7 +46,7 @@ def tokenize_bitfielder(s):
 # comments are allowed at the start mysteriously
 
 lark_parser = Lark(r"""
-    program : fixed_int_stmt [prefix_stmt] stmt*
+    program : c_comment* fixed_int_stmt c_comment* [prefix_stmt] stmt*
                    
     IDENTIFIER : /[A-Za-z_][A-Za-z_0-9]*/
                    
@@ -41,7 +60,7 @@ lark_parser = Lark(r"""
                    
     prefix_stmt : "prefix" IDENTIFIER NL
     
-    stmt : property_stmt | super_property | values_stmt | constant_stmt | NL
+    stmt : property_stmt | super_property | values_stmt | constant_stmt | NL | c_comment
     
     property_stmt : "property" name [bits] NL
     bits : INTEGER
@@ -59,6 +78,8 @@ lark_parser = Lark(r"""
                    
     constant_expr : name | name "(" INTEGER ")"
                    
+    c_comment : "c_comment" INTEGER NL
+                   
     %import common.WS
     %ignore WS
 
@@ -72,14 +93,17 @@ if __name__ == '__main__':
     f = open(filename, "r")
     s = f.read()
 
+    comment_list = []
+    s = extract_c_comments(s, comment_list)
+
     modded_string = tokenize_bitfielder(s)
     
-    print("modded_string:\n%r" % modded_string)
+    # print("modded_string:\n%r" % modded_string)
 
     lark_output = lark_parser.parse(modded_string)
 
+    print("non-pretty:")
     print("%r" % lark_output)
 
     print("\npretty:")
-
     print(lark_output.pretty())
