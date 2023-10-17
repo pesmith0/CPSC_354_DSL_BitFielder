@@ -1,3 +1,5 @@
+[Presentation](https://docs.google.com/presentation/d/1epjUtylYZVRH3M74L7NOlSsO-JgPyW0sDBiYtKDPWF0/edit?usp=sharing)
+
 To use the prototype, Python 3 is required.
 
 In the same directory as bitfielder_parser.py, create a text file to use as input, according to the grammar rules below.
