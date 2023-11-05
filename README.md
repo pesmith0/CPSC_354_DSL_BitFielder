@@ -8,7 +8,11 @@ A Python program will parse the BitFielder input and compile it to C++. This DSL
 
 ===
 
-The program is located in /src. Python 3 is required. To run it:
+The program is located in /src. Python 3 and Lark are required. To install Lark:
+
+```pip3 install lark```
+
+To run BitFielder:
 
 ```python3 bitfielder_parser.py <input filename>```
 
