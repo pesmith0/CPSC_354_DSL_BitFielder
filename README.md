@@ -10,7 +10,7 @@ A Python program will parse the BitFielder input and compile it to C++. This DSL
 
 The program is located in /src. Python 3 is required. To run it:
 
-```py bitfielder_parser.py <input filename>```
+```python3 bitfielder_parser.py <input filename>```
 
 This will print a tree of tokens as output in both normal and pretty formats.
 
