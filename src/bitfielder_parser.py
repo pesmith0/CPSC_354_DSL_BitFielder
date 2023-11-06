@@ -1,6 +1,9 @@
 from tokenize import tokenize, INDENT, DEDENT, NEWLINE, ENCODING, COMMENT
 from io import BytesIO
 from lark import Lark
+import sys
+from compiler import compile_to_c
+from utilities import print_stderr
 
 def extract_c_comments(s, comment_list):
     """
@@ -85,25 +88,31 @@ lark_parser = Lark(r"""
 
     """, start='program')
 
-
 if __name__ == '__main__':
     import sys
 
+    # read from input file
     filename = sys.argv[1]
     f = open(filename, "r")
     s = f.read()
+    f.close()
 
+    # extract c comments
     comment_list = []
     s = extract_c_comments(s, comment_list)
 
+    # get lark output
     modded_string = tokenize_bitfielder(s)
-    
-    # print("modded_string:\n%r" % modded_string)
 
     lark_output = lark_parser.parse(modded_string)
 
-    print("non-pretty:")
-    print("%r" % lark_output)
+    print_stderr("non-pretty:")
+    print_stderr("%r" % lark_output)
 
-    print("\npretty:")
-    print(lark_output.pretty())
+    print_stderr("\npretty:")
+    print_stderr(lark_output.pretty())
+
+    # get c output
+    c_output = compile_to_c(lark_output)
+
+    print(c_output)
