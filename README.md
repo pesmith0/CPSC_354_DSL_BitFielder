@@ -2,7 +2,7 @@
 
 Group Members: Peter Smith
 
-This project is a DSL intended to streamline the process of implementing memory-efficient integer ID systems in C++ by way of bit fields, e.g. a unique integer ID for every block in Minecraft that also contains various properties of the block, such as hardness and flammability. The motivation is that directly implementing them in C++ is tedious and prone to typos or mistakes.
+This project is a DSL intended to streamline the process of implementing memory-efficient integer ID systems in C++ by way of bit fields, e.g. given properties and information about a Minecraft block, such as hardness and flammability, those properties are turned into integer values and the DSL creates a unique integer ID using those values, since no two blocks have all the same properties. The motivation is that directly implementing them in C++ is tedious and prone to typos or mistakes.
 
 A Python program will parse the BitFielder input and compile it to C++. This DSL is not interpreted.
 
