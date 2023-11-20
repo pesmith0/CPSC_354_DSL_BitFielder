@@ -19,7 +19,7 @@ property OCCUPYING_HEIGHT 4
 # Super-properties can optionally specify their own prefix, which will create alternate macros using that prefix which can be used to access properties in the scope of the super-property instead of the entire integer ID like normal.
 # For example, the following syntax will define both BLOCK_IS_AIR(b) and SHAPE_IS_AIR(s), where b is the entire BlockID and s is the SHAPE value.
 property MATERIAL 7
-property SHAPE 9, prefix SHAPE_
+property SHAPE 9
     property HEIGHT 4
     property IS_AIR 1
     property IS_WALL 1
