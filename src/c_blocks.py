@@ -3,6 +3,7 @@ Defines classes that represent blocks of C logic.
 """
 
 from utilities import print_stderr, is_tree, is_token
+import bitfielder_globals
 
 class C_Block:
     grammar_rule_name = None # some subclasses will directly correspond to lark tree tokens
@@ -45,6 +46,12 @@ class C_Block:
         """
         pass
 
+    def convert_to_code(self):
+        """
+        Returns a list of C code strings that will be separated by newlines. Should be overridden by subclasses.
+        """
+        return []
+
 class C_Program(C_Block):
     grammar_rule_name = "program"
 
@@ -56,6 +63,16 @@ class C_Prefix_Stmt(C_Block):
 
 class C_Comment(C_Block):
     grammar_rule_name = "c_comment"
+    number = None
+    content_string = None
+
+    def process_contents(self):
+        self.number = self.contents[0]
+        self.content_string = bitfielder_globals.comment_list[self.number]
+        print_stderr("comment number: %r, content_string: %r" % (self.number, self.content_string))
+
+    def convert_to_code(self):
+        return [self.content_string]
 
 class C_Property_Stmt(C_Block):
     grammar_rule_name = "property_stmt"

@@ -4,6 +4,7 @@ from lark import Lark
 import sys
 from compiler import compile_to_c
 from utilities import print_stderr
+import bitfielder_globals
 
 def extract_c_comments(s, comment_list):
     """
@@ -98,8 +99,7 @@ if __name__ == '__main__':
     f.close()
 
     # extract c comments
-    comment_list = []
-    s = extract_c_comments(s, comment_list)
+    s = extract_c_comments(s, bitfielder_globals.comment_list)
 
     # get lark output
     modded_string = tokenize_bitfielder(s)
