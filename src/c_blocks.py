@@ -45,18 +45,43 @@ class C_Block:
         Should be overridden on subclasses that need to figure something out about their contents after fill_contents()
         """
         pass
+    
+    def do_math(self):
+        """
+        Fills in missing bits values on property statements. Should be overridden by property statements and program.
+        """
+        pass
 
     def convert_to_code(self):
         """
-        Returns a list of C code strings that will be separated by newlines. Should be overridden by subclasses.
+        Returns a list of C code strings that will be separated by newlines. Should be overridden by some subclasses.
         """
-        return []
+        ret = []
+        for content in self.contents:
+            if isinstance(content, C_Block):
+                ret += content.convert_to_code()
+        return ret
 
 class C_Program(C_Block):
     grammar_rule_name = "program"
 
+    def process_contents(self):
+        pass
+
+    def do_math(self):
+        pass ###
+
 class C_Fixed_Int_Stmt(C_Block):
     grammar_rule_name = "fixed_int_stmt"
+    c_int_type_string = None
+    name = None
+
+    def process_contents(self):
+        self.c_int_type_string = self.contents[0]
+        self.name = self.contents[1]
+
+    def convert_to_code(self):
+        return ["%r %r" % (self.c_int_type_string, self.name.name_str)]
 
 class C_Prefix_Stmt(C_Block):
     grammar_rule_name = "prefix_stmt"
@@ -86,8 +111,14 @@ class C_Property_Stmt(C_Block):
             self.bits = bits_obj.bits
         print_stderr("Vars: %r, %r" % (self.name, self.bits))
 
+    def do_math(self):
+        pass ###
+
 class C_Super_Property(C_Block):
     grammar_rule_name = "super_property"
+
+    def do_math(self):
+        pass ###
 
 # constructors produced automatically by C_Program
 
@@ -99,6 +130,11 @@ class C_Constant_Stmt(C_Block):
 
 class C_Name(C_Block):
     grammar_rule_name = "name"
+    name_str = None
+
+    def process_contents(self):
+        assert type(self.contents[0]) == str
+        self.name_str = self.contents[0]
 
 class C_Bits(C_Block):
     grammar_rule_name = "bits"
