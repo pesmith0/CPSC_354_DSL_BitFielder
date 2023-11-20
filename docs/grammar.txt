@@ -17,7 +17,7 @@ _stmt : property_stmt | super_property | values_stmt | constant_stmt | NL | c_co
 property_stmt : "property" name [bits] NL
 bits : INTEGER
    
-super_property : "property" name [bits] NL "{{{" _property_list
+super_property : property_stmt "{{{" _property_list
 _property_list : property_stmt _property_list | property_stmt "}}}"
 
 values_stmt : "values" name ":" NL "{{{" _values_list
