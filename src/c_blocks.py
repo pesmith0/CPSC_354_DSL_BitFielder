@@ -85,6 +85,10 @@ class C_Fixed_Int_Stmt(C_Block):
 
 class C_Prefix_Stmt(C_Block):
     grammar_rule_name = "prefix_stmt"
+    prefix_string = None
+
+    def process_contents(self):
+        self.prefix_string = self.contents[0]
 
 class C_Comment(C_Block):
     grammar_rule_name = "c_comment"
