@@ -81,7 +81,7 @@ class C_Fixed_Int_Stmt(C_Block):
         self.name = self.contents[1]
 
     def convert_to_code(self):
-        return ["%r %r" % (self.c_int_type_string, self.name.name_str)]
+        return ["typedef %s %s;" % (self.c_int_type_string, self.name.name_str)]
 
 class C_Prefix_Stmt(C_Block):
     grammar_rule_name = "prefix_stmt"
