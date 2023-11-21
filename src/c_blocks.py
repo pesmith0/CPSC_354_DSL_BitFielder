@@ -115,9 +115,6 @@ class C_Property_Stmt(C_Block):
             self.bits = bits_obj.bits
         print_stderr("Vars: %r, %r" % (self.name, self.bits))
 
-    def do_math(self):
-        pass ###
-
 class C_Super_Property(C_Block):
     grammar_rule_name = "super_property"
 
@@ -131,6 +128,9 @@ class C_Values(C_Block):
 
 class C_Constant_Stmt(C_Block):
     grammar_rule_name = "constant_stmt"
+
+class C_Constant_Expr(C_Block):
+    grammar_rule_name = "constant_expr"
 
 class C_Name(C_Block):
     grammar_rule_name = "name"
@@ -147,9 +147,6 @@ class C_Bits(C_Block):
     def process_contents(self):
         assert type(self.contents[0]) == int
         self.bits = self.contents[0]
-
-class C_Constant_Expr(C_Block):
-    grammar_rule_name = "constant_expr"
 
     
 def get_class_from_tree(lark_tree):
