@@ -48,9 +48,56 @@ class C_Block:
     
     def do_math_for_properties(self):
         """
-        Fills in missing bits values on property statements. Should be overridden by property statements and program.
+        Fills in missing bits values on property statements. Should be overridden by super property statements and program.
         """
-        pass
+        print_stderr("Error: called do_math_for_properties() on wrong object")
+        exit(1)
+
+    def _do_math_for_properties_helper(self, total_bits):
+        """
+        Helper function for do_math_for_properties().
+        """
+        # first pass: count number of unknown bits parameters and sum of bits besides unknowns
+        if total_bits is None:
+            maximum_unknowns = 0
+        else:
+            maximum_unknowns = 1
+        unknowns = 0
+        sum_of_bits_besides_unknowns = 0
+        for content in self.contents:
+            if isinstance(content, (C_Property_Stmt, C_Super_Property)):
+                if content.bits is None:
+                    unknowns += 1
+                else:
+                    sum_of_bits_besides_unknowns += content.bits
+
+        if unknowns > maximum_unknowns:
+            print_stderr("Error: more unknown bits parameters (%r) than allowed. "
+                         "If fixed width int type is unrecognized, 0 unknown bits parameters are allowed." % unknowns)
+            exit(1)
+
+        # second pass: fill in unknown bits parameter as necessary, and fill in offset
+        sum_of_bits = 0
+        for content in self.contents:
+            if isinstance(content, (C_Property_Stmt, C_Super_Property)):
+                content.offset = sum_of_bits
+                if content.bits is None:
+                    content.bits = total_bits - sum_of_bits_besides_unknowns
+                    if content.bits < 0:
+                        print_stderr("Error 1: some collection of properties added up to too many bits (%r) "
+                                     "to fit in minimum total bits (%r)" % (sum_of_bits_besides_unknowns, total_bits))
+                        exit(1)
+                sum_of_bits += content.bits
+
+                # if it's a super property, recursively call do_math_for_properties()
+                if isinstance(content, C_Super_Property):
+                    content.do_math_for_properties()
+        
+        if total_bits is not None:
+            if sum_of_bits > total_bits:
+                print_stderr("Error 2: some collection of properties added up to too many bits (%r) "
+                             "to fit in minimum total bits (%r)" % (sum_of_bits, total_bits))
+                exit(1)
 
     def convert_to_code(self):
         """
@@ -69,33 +116,7 @@ class C_Program(C_Block):
         pass
 
     def do_math_for_properties(self):
-        # first pass: count number of unknown bits parameters and sum of bits besides unknowns
-        if bitfielder_globals.minimum_total_bits is None:
-            maximum_unknowns = 0
-        else:
-            maximum_unknowns = 1
-        unknowns = 0
-        sum_of_bits_besides_unknowns = 0
-        for content in self.contents:
-            if isinstance(content, C_Property_Stmt):
-                if content.bits is None:
-                    unknowns += 1
-                else:
-                    sum_of_bits_besides_unknowns += content.bits
-
-        if unknowns > maximum_unknowns:
-            print_stderr("Error: more unknown bits parameters (%r) than allowed. "
-                         "If fixed width int type is unrecognized, 0 unknown bits parameters are allowed." % unknowns)
-            exit(1)
-
-        # second pass: fill in unknown bits parameter as necessary, and fill in offset
-        sum_of_bits = 0
-        for content in self.contents:
-            if isinstance(content, C_Property_Stmt):
-                content.offset = sum_of_bits
-                if content.bits is None:
-                    content.bits = bitfielder_globals.minimum_total_bits - sum_of_bits_besides_unknowns
-                sum_of_bits += content.bits
+        self._do_math_for_properties_helper(bitfielder_globals.minimum_total_bits)
 
 class C_Fixed_Int_Stmt(C_Block):
     grammar_rule_name = "fixed_int_stmt"
@@ -145,13 +166,46 @@ class C_Property_Stmt(C_Block):
         print_stderr("Vars: %r, %r" % (self.name, self.bits))
 
     def convert_to_code(self):
-        return ["Property statement %s: bits = %r, offset = %r" % (self.name, self.bits, self.offset)]
+        return ["Property statement %s: bits = %r, inner offset = %r" % (self.name, self.bits, self.offset)]
 
 class C_Super_Property(C_Block):
     grammar_rule_name = "super_property"
+    name = None # C_Name instance
+    bits = None # integer
+    offset = None # integer
+
+    def process_contents(self):
+        # set information to first child's, then delete first child (first child in grammar represents this object)
+        first_child = self.contents[0]
+        self.name = first_child.name
+        self.bits = first_child.bits
+        del self.contents[0]
+        # if we don't know bits, but every child does, set bits to the sum of children's bits
+        total_child_bits = 0
+        can_calculate_bits = True
+        for child_instance in self.contents:
+            if child_instance.bits is None:
+                can_calculate_bits = False
+                break
+            total_child_bits += child_instance.bits
+        if can_calculate_bits:
+            if self.bits is None:
+                self.bits = total_child_bits
+            elif self.bits < total_child_bits:
+                print_stderr("Error: super property %s has explicitly set bits (%r) "
+                             "to be too small for its children (sum %r)" % (self.name, self.bits, total_child_bits))
+                exit(1)
+        # print_stderr("Vars: %r, %r" % (self.name, self.bits))
 
     def do_math_for_properties(self):
-        pass ###
+        self._do_math_for_properties_helper(self.bits)
+
+    def convert_to_code(self):
+        ret = ["Super property statement %s: bits = %r, inner offset = %r" % (self.name, self.bits, self.offset)]
+        for content in self.contents:
+            if isinstance(content, C_Block):
+                ret += content.convert_to_code()
+        return ret
 
 # constructors produced automatically by C_Program
 
