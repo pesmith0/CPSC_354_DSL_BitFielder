@@ -2,7 +2,7 @@
 Defines classes that represent blocks of C logic.
 """
 
-from utilities import print_stderr, is_tree, is_token
+from utilities import print_stderr, is_tree, is_token, find_minimum_total_bits
 import bitfielder_globals
 
 class C_Block:
@@ -46,7 +46,7 @@ class C_Block:
         """
         pass
     
-    def do_math(self):
+    def do_math_for_properties(self):
         """
         Fills in missing bits values on property statements. Should be overridden by property statements and program.
         """
@@ -68,8 +68,34 @@ class C_Program(C_Block):
     def process_contents(self):
         pass
 
-    def do_math(self):
-        pass ###
+    def do_math_for_properties(self):
+        # first pass: count number of unknown bits parameters and sum of bits besides unknowns
+        if bitfielder_globals.minimum_total_bits is None:
+            maximum_unknowns = 0
+        else:
+            maximum_unknowns = 1
+        unknowns = 0
+        sum_of_bits_besides_unknowns = 0
+        for content in self.contents:
+            if isinstance(content, C_Property_Stmt):
+                if content.bits is None:
+                    unknowns += 1
+                else:
+                    sum_of_bits_besides_unknowns += content.bits
+
+        if unknowns > maximum_unknowns:
+            print_stderr("Error: more unknown bits parameters (%r) than allowed. "
+                         "If fixed width int type is unrecognized, 0 unknown bits parameters are allowed." % unknowns)
+            exit(1)
+
+        # second pass: fill in unknown bits parameter as necessary, and fill in offset
+        sum_of_bits = 0
+        for content in self.contents:
+            if isinstance(content, C_Property_Stmt):
+                content.offset = sum_of_bits
+                if content.bits is None:
+                    content.bits = bitfielder_globals.minimum_total_bits - sum_of_bits_besides_unknowns
+                sum_of_bits += content.bits
 
 class C_Fixed_Int_Stmt(C_Block):
     grammar_rule_name = "fixed_int_stmt"
@@ -79,6 +105,8 @@ class C_Fixed_Int_Stmt(C_Block):
     def process_contents(self):
         self.c_int_type_string = self.contents[0]
         self.name = self.contents[1]
+
+        bitfielder_globals.minimum_total_bits = find_minimum_total_bits(self.c_int_type_string)
 
     def convert_to_code(self):
         return ["typedef %s %s;" % (self.c_int_type_string, self.name.name_str)]
@@ -107,6 +135,7 @@ class C_Property_Stmt(C_Block):
     grammar_rule_name = "property_stmt"
     name = None # C_Name instance
     bits = None # integer
+    offset = None # integer
 
     def process_contents(self):
         self.name = self.contents[0]
@@ -115,10 +144,13 @@ class C_Property_Stmt(C_Block):
             self.bits = bits_obj.bits
         print_stderr("Vars: %r, %r" % (self.name, self.bits))
 
+    def convert_to_code(self):
+        return ["Property statement %s: bits = %r, offset = %r" % (self.name, self.bits, self.offset)]
+
 class C_Super_Property(C_Block):
     grammar_rule_name = "super_property"
 
-    def do_math(self):
+    def do_math_for_properties(self):
         pass ###
 
 # constructors produced automatically by C_Program
@@ -135,6 +167,9 @@ class C_Constant_Expr(C_Block):
 class C_Name(C_Block):
     grammar_rule_name = "name"
     name_str = None
+
+    def __str__(self):
+        return self.name_str
 
     def process_contents(self):
         assert type(self.contents[0]) == str

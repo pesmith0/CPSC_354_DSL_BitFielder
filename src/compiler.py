@@ -9,7 +9,7 @@ def compile_to_c(lark_output):
     c_program = C_Program(lark_output)
 
     # fill in abstract C blocks (including comments), turning them into concrete blocks
-    c_program.do_math()
+    c_program.do_math_for_properties()
 
     # concrete C blocks to strings of C code
     c_code = c_program.convert_to_code()
