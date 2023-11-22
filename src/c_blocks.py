@@ -5,6 +5,12 @@ Defines classes that represent blocks of C logic.
 from utilities import print_stderr, is_tree, is_token, find_minimum_total_bits
 import bitfielder_globals
 
+class Attr_Holder:
+    """
+    Used for holding miscellaneous attributes
+    """
+    pass
+
 class C_Block:
     grammar_rule_name = None # some subclasses will directly correspond to lark tree tokens
     def __init__(self, lark_tree):
@@ -76,7 +82,7 @@ class C_Block:
                          "If fixed width int type is unrecognized, 0 unknown bits parameters are allowed." % unknowns)
             exit(1)
 
-        # second pass: fill in unknown bits parameter as necessary, and fill in offset
+        # second pass: fill in unknown bits parameter as necessary, and fill in offset; also fill in prefix lists
         sum_of_bits = 0
         for content in self.contents:
             if isinstance(content, (C_Property_Stmt, C_Super_Property)):
@@ -88,6 +94,9 @@ class C_Block:
                                      "to fit in minimum total bits (%r)" % (sum_of_bits_besides_unknowns, total_bits))
                         exit(1)
                 sum_of_bits += content.bits
+
+                # fill in prefix lists
+                content.prefix_list = self.prefix_list + [self.name.name_str]
 
                 # if it's a super property, recursively call do_math_for_properties()
                 if isinstance(content, C_Super_Property):
@@ -111,12 +120,43 @@ class C_Block:
 
 class C_Program(C_Block):
     grammar_rule_name = "program"
+    fixed_int_name = None
+    name = None # Attr_Holder instance that imitates a C_Name instance
+    prefix_list = []
 
     def process_contents(self):
-        pass
+        for content in self.contents:
+            if isinstance(content, C_Fixed_Int_Stmt):
+                self.fixed_int_name = content.name.name_str
+            if isinstance(content, C_Prefix_Stmt):
+                name_obj = Attr_Holder()
+                name_obj.name_str = content.prefix_string # kluge to imitate C_Name object
+                self.name = name_obj
 
     def do_math_for_properties(self):
         self._do_math_for_properties_helper(bitfielder_globals.minimum_total_bits)
+
+    def convert_to_code(self):
+        ret = []
+        header_name = self.fixed_int_name.upper() + "_H"
+
+        ret += [""]
+        ret += ["#ifndef %s" % header_name]
+        ret += ["#define %s" % header_name]
+        ret += [""]
+        ret += ["#include <cstdint>"]
+        ret += [""]
+
+        for content in self.contents:
+            if isinstance(content, C_Block):
+                ret += content.convert_to_code()
+                ret += [""]
+
+        ret += [""]
+        ret += [""]
+        ret += ["#endif"]
+
+        return ret
 
 class C_Fixed_Int_Stmt(C_Block):
     grammar_rule_name = "fixed_int_stmt"
@@ -157,6 +197,7 @@ class C_Property_Stmt(C_Block):
     name = None # C_Name instance
     bits = None # integer
     offset = None # integer
+    prefix_list = [] # strings
 
     def process_contents(self):
         self.name = self.contents[0]
@@ -166,13 +207,30 @@ class C_Property_Stmt(C_Block):
         print_stderr("Vars: %r, %r" % (self.name, self.bits))
 
     def convert_to_code(self):
-        return ["Property statement %s: bits = %r, inner offset = %r" % (self.name, self.bits, self.offset)]
+        ret = []
+        ret += ["Property statement %s: bits = %r, inner offset = %r, "
+                "prefix list = %r" % (self.name, self.bits, self.offset, self.prefix_list)] ###
+
+        # inner_prefix = self.prefix_list[-1]
+        bits = self.bits
+        offset = self.offset
+        name = self.name.name_str
+
+        for i in range(len(self.prefix_list)):
+            current_prefix = self.prefix_list[-1-i]
+            if i == 0:
+                ret += [f"#define {current_prefix}_{name}(b) ( ((b)>>{offset}) & ((1<<{bits}) - 1) )"]
+            else:
+                ret += [f"#define {current_prefix}_{name}(b) {previous_prefix}_{name}({current_prefix}_{previous_prefix}(b))"]
+            previous_prefix = current_prefix
+        return ret
 
 class C_Super_Property(C_Block):
     grammar_rule_name = "super_property"
     name = None # C_Name instance
     bits = None # integer
     offset = None # integer
+    prefix_list = [] # strings
 
     def process_contents(self):
         # set information to first child's, then delete first child (first child in grammar represents this object)

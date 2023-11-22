@@ -5,7 +5,7 @@
 uint_fast32_t BlockID
 
 # We also define a prefix that will go before every property name in C++. For example, a property "HEALTH" would result in a macro "BLOCK_HEALTH" in C++.
-prefix BLOCK_
+prefix BLOCK
 
 # === Properties ===
 # Here we will specify all of the properties we want our ID to contain. These lines will turn into accessor and constructor macros for the properties.
