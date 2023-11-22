@@ -231,12 +231,14 @@ class C_Super_Property(C_Block):
     bits = None # integer
     offset = None # integer
     prefix_list = [] # strings
+    codeable_child = None
 
     def process_contents(self):
-        # set information to first child's, then delete first child (first child in grammar represents this object)
+        # set information to first child's, save it in a variable, then delete it from contents (first child in grammar represents this object)
         first_child = self.contents[0]
         self.name = first_child.name
         self.bits = first_child.bits
+        self.codeable_child = first_child
         del self.contents[0]
         # if we don't know bits, but every child does, set bits to the sum of children's bits
         total_child_bits = 0
@@ -259,10 +261,16 @@ class C_Super_Property(C_Block):
         self._do_math_for_properties_helper(self.bits)
 
     def convert_to_code(self):
-        ret = ["Super property statement %s: bits = %r, inner offset = %r" % (self.name, self.bits, self.offset)]
+        ret = ["Super property statement %s: bits = %r, inner offset = %r" % (self.name, self.bits, self.offset)] ###
+        self.codeable_child.bits = self.bits
+        self.codeable_child.offset = self.offset
+        self.codeable_child.prefix_list = self.prefix_list
+        ret += self.codeable_child.convert_to_code()
         for content in self.contents:
             if isinstance(content, C_Block):
+                ret += [""]
                 ret += content.convert_to_code()
+        ret += [""]
         return ret
 
 # constructors produced automatically by C_Program
