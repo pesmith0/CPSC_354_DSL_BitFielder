@@ -219,9 +219,17 @@ class C_Property_Stmt(C_Block):
         for i in range(len(self.prefix_list)):
             current_prefix = self.prefix_list[-1-i]
             if i == 0:
+                # accessor
                 ret += [f"#define {current_prefix}_{name}(b) ( ((b)>>{offset}) & ((1<<{bits}) - 1) )"]
+                # constructor
+                ret += [f"#define C_{current_prefix}_{name}(v) ((v) << {offset})"]
             else:
+                # accessor
                 ret += [f"#define {current_prefix}_{name}(b) {previous_prefix}_{name}({current_prefix}_{previous_prefix}(b))"]
+                # constructor
+                ret += [f"#define C_{current_prefix}_{name}(v) C_{current_prefix}_{previous_prefix}(C_{previous_prefix}_{name}(v))"]
+
+
             previous_prefix = current_prefix
         return ret
 
