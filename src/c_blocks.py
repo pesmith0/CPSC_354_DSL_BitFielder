@@ -101,6 +101,13 @@ class C_Block:
                 # if it's a super property, recursively call do_math_for_properties()
                 if isinstance(content, C_Super_Property):
                     content.do_math_for_properties()
+
+                # add to property_dict
+                if content.name.name_str in bitfielder_globals.property_dict:
+                    print_stderr("Error: defined a property name twice")
+                    exit(1)
+                else:
+                    bitfielder_globals.property_dict[content.name.name_str] = content.bits
         
         if total_bits is not None:
             if sum_of_bits > total_bits:
@@ -284,6 +291,43 @@ class C_Super_Property(C_Block):
 
 class C_Values(C_Block):
     grammar_rule_name = "values_stmt"
+    name = None # C_Name instance
+
+    def process_contents(self):
+        self.name = self.contents[0]
+        del self.contents[0]
+
+        for content in self.contents:
+            if isinstance(content, C_Name):
+                item_name_str = content.name_str
+                bitfielder_globals.constant_names += [item_name_str]
+
+    def convert_to_code(self):
+        ret = []
+
+        statement_name_str = self.name.name_str
+        if statement_name_str not in bitfielder_globals.property_dict:
+            print_stderr("Error: values statement references unknown property %s" % (statement_name_str))
+            exit(1)
+
+        i = 1
+        for content in self.contents:
+            if isinstance(content, C_Name):
+                item_name_str = content.name_str
+                bits = bitfielder_globals.property_dict[statement_name_str]
+                prefix = bitfielder_globals.prefix_name
+                ret += [f"#define {item_name_str} ( C_{prefix}_{statement_name_str}({i}) )"]
+
+                allowed_values = pow(2, bits) - 1
+                if i > allowed_values:
+                    print_stderr("Error: values in value statement exceeded allowed values (%r)" % (allowed_values,))
+                    exit(1)
+
+                i += 1
+
+        # ret += [""]
+
+        return ret
 
 class C_Constant_Stmt(C_Block):
     grammar_rule_name = "constant_stmt"
@@ -315,7 +359,6 @@ class C_Constant_Expr(C_Block):
     value = None
 
     def __str__(self):
-        # C_BLOCK_TOP_SUBHEIGHT(12) | C_BLOCK_IS_WALL(1) )"
         name = self.name.name_str
         value = self.value
         prefix = bitfielder_globals.prefix_name
