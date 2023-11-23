@@ -216,8 +216,8 @@ class C_Property_Stmt(C_Block):
 
     def convert_to_code(self):
         ret = []
-        ret += ["Property statement %s: bits = %r, inner offset = %r, "
-                "prefix list = %r" % (self.name, self.bits, self.offset, self.prefix_list)] ###
+        # ret += ["Property statement %s: bits = %r, inner offset = %r, "
+        #         "prefix list = %r" % (self.name, self.bits, self.offset, self.prefix_list)] ###
 
         # inner_prefix = self.prefix_list[-1]
         bits = self.bits
@@ -275,7 +275,8 @@ class C_Super_Property(C_Block):
         self._do_math_for_properties_helper(self.bits)
 
     def convert_to_code(self):
-        ret = ["Super property statement %s: bits = %r, inner offset = %r" % (self.name, self.bits, self.offset)] ###
+        ret = []
+        # ret += ["Super property statement %s: bits = %r, inner offset = %r" % (self.name, self.bits, self.offset)] ###
         self.codeable_child.bits = self.bits
         self.codeable_child.offset = self.offset
         self.codeable_child.prefix_list = self.prefix_list
@@ -339,7 +340,7 @@ class C_Constant_Stmt(C_Block):
 
     def convert_to_code(self):
         ret = []
-        ret += ["Constant statement %s" % (self.name,)] ###
+        # ret += ["Constant statement %s" % (self.name,)] ###
 
         name = self.name.name_str
         ret_str = f"#define {name} ( "
