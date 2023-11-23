@@ -132,6 +132,7 @@ class C_Program(C_Block):
                 name_obj = Attr_Holder()
                 name_obj.name_str = content.prefix_string # kluge to imitate C_Name object
                 self.name = name_obj
+                bitfielder_globals.prefix_name = self.name.name_str
 
     def do_math_for_properties(self):
         self._do_math_for_properties_helper(bitfielder_globals.minimum_total_bits)
@@ -228,8 +229,6 @@ class C_Property_Stmt(C_Block):
                 ret += [f"#define {current_prefix}_{name}(b) {previous_prefix}_{name}({current_prefix}_{previous_prefix}(b))"]
                 # constructor
                 ret += [f"#define C_{current_prefix}_{name}(v) C_{current_prefix}_{previous_prefix}(C_{previous_prefix}_{name}(v))"]
-
-
             previous_prefix = current_prefix
         return ret
 
@@ -288,9 +287,66 @@ class C_Values(C_Block):
 
 class C_Constant_Stmt(C_Block):
     grammar_rule_name = "constant_stmt"
+    name = None # C_Name instance
+
+    def process_contents(self):
+        self.name = self.contents[0]
+        bitfielder_globals.constant_names += [self.name.name_str]
+
+    def convert_to_code(self):
+        ret = []
+        ret += ["Constant statement %s" % (self.name,)] ###
+
+        name = self.name.name_str
+        ret_str = f"#define {name} ( "
+        string_list = []
+        for content in self.contents:
+            if isinstance(content, C_Constant_Expr):
+                string_list += [str(content)]
+        ret_str += " | ".join(string_list)
+        ret_str += " )"
+
+        ret += [ret_str]
+        return ret
 
 class C_Constant_Expr(C_Block):
     grammar_rule_name = "constant_expr"
+    name = None
+    value = None
+
+    def __str__(self):
+        # C_BLOCK_TOP_SUBHEIGHT(12) | C_BLOCK_IS_WALL(1) )"
+        name = self.name.name_str
+        value = self.value
+        prefix = bitfielder_globals.prefix_name
+        if value is None:
+            ret_str = f"{name}"
+        else:
+            ret_str = f"C_{prefix}_{name}({value})"
+        return ret_str
+
+    def process_contents(self):
+        self.name = self.contents[0]
+
+        c_len = len(self.contents)
+
+        # using an existing constant
+        for name_str in bitfielder_globals.constant_names:
+            if name_str == self.name.name_str:
+                if c_len == 2:
+                    print_stderr("Error: used existing constant with a value in constant statement")
+                    exit(1)
+                return
+
+        # using a property constructor
+        if c_len == 2:
+            self.value = self.contents[1]
+        elif c_len == 1:
+            # using a boolean property constructor
+            self.value = 1
+        else:
+            print_stderr("Error: unexpected length of contents in constant_expr")
+            exit(1)
 
 class C_Name(C_Block):
     grammar_rule_name = "name"
