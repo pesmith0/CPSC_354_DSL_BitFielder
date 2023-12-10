@@ -1,4 +1,5 @@
-# CPSC_354 Class Project: "BitFielder" Domain-Specific Language
+# BitFielder
+CPSC 354 term project
 
 ## Group Members
 Peter Smith
