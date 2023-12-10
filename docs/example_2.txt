@@ -8,7 +8,7 @@ prefix BLOCK_
 //a jna oinaow
 
 property HEALTH
-property SHAPE 9, prefix SHAPE_
+property SHAPE 9
     property HEIGHT 4
     property IS_AIR 1
 

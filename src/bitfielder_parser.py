@@ -1,6 +1,10 @@
 from tokenize import tokenize, INDENT, DEDENT, NEWLINE, ENCODING, COMMENT
 from io import BytesIO
 from lark import Lark
+import sys
+from compiler import compile_to_c
+from utilities import print_stderr
+import bitfielder_globals
 
 def extract_c_comments(s, comment_list):
     """
@@ -46,7 +50,7 @@ def tokenize_bitfielder(s):
 # comments are allowed at the start mysteriously
 
 lark_parser = Lark(r"""
-    program : c_comment* fixed_int_stmt c_comment* [prefix_stmt] stmt*
+    program : c_comment* fixed_int_stmt c_comment* [prefix_stmt] _stmt*
                    
     IDENTIFIER : /[A-Za-z_][A-Za-z_0-9]*/
                    
@@ -60,21 +64,21 @@ lark_parser = Lark(r"""
                    
     prefix_stmt : "prefix" IDENTIFIER NL
     
-    stmt : property_stmt | super_property | values_stmt | constant_stmt | NL | c_comment
+    _stmt : property_stmt | super_property | values_stmt | constant_stmt | NL | c_comment
     
     property_stmt : "property" name [bits] NL
     bits : INTEGER
                    
-    super_property : "property" name [bits] "," "prefix" name NL "{{{" property_list
-    property_list : property_stmt property_list | property_stmt "}}}"
+    super_property : property_stmt "{{{" _property_list
+    _property_list : property_stmt _property_list | property_stmt "}}}"
     
-    values_stmt : "values" name ":" NL "{{{" values_list
+    values_stmt : "values" name ":" NL "{{{" _values_list
                    
-    values_list : name NL values_list | name NL "}}}"
+    _values_list : name NL _values_list | name NL "}}}"
                    
-    constant_stmt : "constant" name "{" expr_list "}" NL
+    constant_stmt : "constant" name "{" _expr_list "}" NL
                    
-    expr_list : constant_expr "," expr_list | constant_expr
+    _expr_list : constant_expr "," _expr_list | constant_expr
                    
     constant_expr : name | name "(" INTEGER ")"
                    
@@ -85,25 +89,30 @@ lark_parser = Lark(r"""
 
     """, start='program')
 
-
 if __name__ == '__main__':
     import sys
 
+    # read from input file
     filename = sys.argv[1]
     f = open(filename, "r")
     s = f.read()
+    f.close()
 
-    comment_list = []
-    s = extract_c_comments(s, comment_list)
+    # extract c comments
+    s = extract_c_comments(s, bitfielder_globals.comment_list)
 
+    # get lark output
     modded_string = tokenize_bitfielder(s)
-    
-    # print("modded_string:\n%r" % modded_string)
 
     lark_output = lark_parser.parse(modded_string)
 
-    print("non-pretty:")
-    print("%r" % lark_output)
+    print_stderr("non-pretty:")
+    print_stderr("%r" % lark_output)
 
-    print("\npretty:")
-    print(lark_output.pretty())
+    print_stderr("\npretty:")
+    print_stderr(lark_output.pretty())
+
+    # get c output
+    c_output = compile_to_c(lark_output)
+
+    print(c_output)
